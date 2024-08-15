@@ -1,0 +1,9 @@
+# 설정파일
+.env
+
+# resource 파일들
+**/src/
+
+# cache
+**/.idea
+
