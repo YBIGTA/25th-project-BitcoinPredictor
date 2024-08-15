@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.core.background_tasks import start_background_tasks
-from app.api.routers import endpoints
+from app.routers.routers import endpoints
 
 app = FastAPI()
 
