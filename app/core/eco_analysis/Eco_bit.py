@@ -2,8 +2,53 @@ import yfinance as yf
 import pandas as pd
 from fredapi import Fred
 import requests
-import schedule
-import time
+from pymongo import MongoClient
+from pandas.api.types import CategoricalDtype
+
+class FearGreedIndexCollector:
+    def __init__(self, start_date="2023-07-01"):
+        self.start_date = pd.to_datetime(start_date)
+        self.df_minutely = self.get_fear_greed_index()
+
+    def get_fear_greed_index(self):
+        url = "https://api.alternative.me/fng/?limit=1000&format=json"
+        response = requests.get(url)
+        data = response.json()
+
+        df = pd.DataFrame(data['data'])
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+        df['value'] = pd.to_numeric(df['value'])
+
+        categories = ["Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"]
+        cat_type = CategoricalDtype(categories=categories, ordered=True)
+        df['value_classification'] = df['value_classification'].astype(cat_type)
+        df['value_classification'] = df['value_classification'].cat.codes
+
+        df = df[df['timestamp'] >= self.start_date]
+        df = df.drop(columns=['time_until_update'], errors='ignore')
+
+        df_minutely = pd.DataFrame()
+        for date in pd.date_range(start=self.start_date, end=pd.Timestamp.now(), freq='D').date:
+            daily_data = df[df['timestamp'].dt.date == date]
+            if not daily_data.empty:
+                time_range = pd.date_range(start=f"{date} 00:00", end=f"{date} 23:59", freq='T')
+                daily_minutely = pd.DataFrame({
+                    'timestamp': time_range,
+                    'value': daily_data['value'].values[0],
+                    'value_classification': daily_data['value_classification'].values[0]
+                })
+            else:
+                time_range = pd.date_range(start=f"{date} 00:00", end=f"{date} 23:59", freq='T')
+                daily_minutely = pd.DataFrame({
+                    'timestamp': time_range,
+                    'value': [None] * len(time_range),
+                    'value_classification': [None] * len(time_range)
+                })
+
+            df_minutely = pd.concat([df_minutely, daily_minutely])
+
+        df_minutely.set_index('timestamp', inplace=True)
+        return df_minutely
 
 class CryptoAndMarketDataCollector:
     def __init__(self, crypto_symbol="BTCUSDT", start_date="2024-07-01", fred_api_key=None):
@@ -14,16 +59,16 @@ class CryptoAndMarketDataCollector:
         self.end_date = pd.Timestamp.now()
         self.fred_api_key = fred_api_key
         self.bitcoin_data = self.get_binance_minute_data(self.crypto_symbol, self.start_date, self.end_date)
+        self.fear_greed_collector = FearGreedIndexCollector(start_date=start_date)
         self.initial_data_merge()
 
-    # Binance API로부터 1분 단위 비트코인 데이터를 가져오는 함수
     def get_binance_minute_data(self, symbol, start_date, end_date):
         base_url = "https://api.binance.com/api/v3/klines"
-        interval = "1m"  # 1분 간격
-        limit = 1000  # 한 번에 요청할 수 있는 최대 데이터 수
+        interval = "1m"
+        limit = 1000
         all_data = []
 
-        start_timestamp = int(start_date.timestamp() * 1000)  # milliseconds
+        start_timestamp = int(start_date.timestamp() * 1000)
         end_timestamp = int(end_date.timestamp() * 1000)
 
         while start_timestamp < end_timestamp:
@@ -41,32 +86,25 @@ class CryptoAndMarketDataCollector:
                 print("더 이상 데이터가 없습니다.")
                 break
 
-            # 수집한 데이터 추가
             all_data.extend(data)
 
-            # 수집된 데이터의 가장 최신 timestamp 가져오기
             last_timestamp = data[-1][0]
-            start_timestamp = last_timestamp + 1  # 다음 데이터 수집 시작점
+            start_timestamp = last_timestamp + 1
 
-            # 진행 상황 출력
             print(f"Collected data up to: {pd.to_datetime(last_timestamp, unit='ms')}")
 
-        # 데이터프레임으로 변환
         columns = ['Open time', 'Open', 'High', 'Low', 'Close', 'Volume',
                    'Close time', 'Quote asset volume', 'Number of trades',
                    'Taker buy base asset volume', 'Taker buy quote asset volume', 'Ignore']
         df = pd.DataFrame(all_data, columns=columns)
 
-        # 필요한 컬럼만 선택
         df = df[['Open time', 'Open', 'High', 'Low', 'Close', 'Volume']]
 
-        # 타임스탬프를 datetime으로 변환
-        df['Open time'] = pd.to_datetime(df['Open time'], unit='ms')
-        df.set_index('Open time', inplace=True)
+        df['timestamp'] = pd.to_datetime(df['Open time'], unit='ms')
+        df.set_index('timestamp', inplace=True)
 
         return df
 
-    # Yahoo Finance와 FRED 데이터 초기 수집 및 병합
     def initial_data_merge(self):
         yahoo_indicators = {
             '^GSPC': 'S&P 500 Index',
@@ -99,68 +137,67 @@ class CryptoAndMarketDataCollector:
             'GS10': '10-Year Treasury Constant Maturity Rate',
             'DCOILWTICO': 'Crude Oil Prices: West Texas Intermediate (WTI)'
         }
-        failed_tickers = []
 
-        for ticker, description in yahoo_indicators.items():
+        for ticker in yahoo_indicators:
             try:
                 data = yf.download(ticker, start=self.start_date, end=self.end_date, interval='1h')
                 if not data.empty:
                     data.index = data.index.tz_localize(None)
                     data = data[['Adj Close']].rename(columns={'Adj Close': ticker})
                     self.bitcoin_data = self.bitcoin_data.merge(data, left_index=True, right_index=True, how='left')
-                else:
-                    failed_tickers.append(ticker)
-                    print(f"No data available for {ticker}")
             except Exception as e:
-                failed_tickers.append(ticker)
                 print(f"Failed to retrieve data for {ticker}: {e}")
 
         fred = Fred(api_key=self.fred_api_key)
-        for series_id, description in fred_indicators.items():
-            data = fred.get_series(series_id, observation_start=self.start_date, observation_end=self.end_date)
-            if not data.empty:
-                df = pd.DataFrame(data, columns=[series_id])
-                df.index = pd.to_datetime(df.index)
-                df.index = df.index.tz_localize(None)
-                df_resampled = df.resample('1h').asfreq().ffill()
-                self.bitcoin_data = self.bitcoin_data.merge(df_resampled, left_index=True, right_index=True, how='left')
-            else:
-                print(f"No data available for {series_id}")
+        for series_id in fred_indicators:
+            try:
+                data = fred.get_series(series_id, observation_start=self.start_date, observation_end=self.end_date)
+                if not data.empty:
+                    df = pd.DataFrame(data, columns=[series_id])
+                    df.index = pd.to_datetime(df.index)
+                    df.index = df.index.tz_localize(None)
+                    df_resampled = df.resample('1h').asfreq().ffill()
+                    self.bitcoin_data = self.bitcoin_data.merge(df_resampled, left_index=True, right_index=True, how='left')
+            except Exception as e:
+                print(f"Failed to retrieve FRED data for {series_id}: {e}")
 
+        self.bitcoin_data = self.bitcoin_data.merge(self.fear_greed_collector.df_minutely, left_index=True, right_index=True, how='left')
+        
         self.bitcoin_data = self.bitcoin_data.bfill().ffill()
 
-    # 주기적으로 데이터를 업데이트하는 함수
     def update_data(self):
         last_timestamp = self.bitcoin_data.index[-1]
         new_end_date = pd.Timestamp.now()
 
-        # 새로 추가된 데이터만 가져옴
-        new_data = self.get_binance_minute_data(self.crypto_symbol, last_timestamp, new_end_date)
+        new_crypto_data = self.get_binance_minute_data(self.crypto_symbol, last_timestamp, new_end_date)
 
-        if not new_data.empty:
-            # 중복 제거: last_timestamp 이후의 데이터만 추가
-            new_data = new_data[new_data.index > last_timestamp]
-            if not new_data.empty:
-                self.bitcoin_data = pd.concat([self.bitcoin_data, new_data])
-                self.bitcoin_data = self.bitcoin_data.bfill().ffill()
-                print(f"Data updated up to: {self.bitcoin_data.index[-1]}")
-            else:
-                print("No new data to append.")
-        else:
-            print("No new data available.")
+        self.fear_greed_collector.df_minutely = self.fear_greed_collector.get_fear_greed_index()
+        new_fear_greed_data = self.fear_greed_collector.df_minutely[self.fear_greed_collector.df_minutely.index > last_timestamp]
 
-        # DataFrame을 CSV 파일로 저장
-        output_file = "combined.csv"
+        if not new_crypto_data.empty:
+            self.bitcoin_data = pd.concat([self.bitcoin_data, new_crypto_data])
+        if not new_fear_greed_data.empty:
+            self.bitcoin_data.update(new_fear_greed_data)
+        
+        self.bitcoin_data = self.bitcoin_data.bfill().ffill()
+        print(f"Data updated up to: {self.bitcoin_data.index[-1]}")
+
+        print("Latest Bitcoin Data (1 minute):")
+        print(self.bitcoin_data.iloc[-1])
+
+    def save_to_csv(self):
+        output_file = "combined_data.csv"
         self.bitcoin_data.to_csv(output_file)
         print(f"Data has been saved to {output_file}")
 
-    # 1분마다 데이터를 업데이트하도록 스케줄 설정
-    def start_scheduled_updates(self):
-        schedule.every(1).minutes.do(self.update_data)
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+    def save_to_mongo(self, mongo_uri="mongodb://localhost:27017/", db_name="economic", collection_name="eco"):
+        client = MongoClient(mongo_uri)
+        db = client[db_name]
+        collection = db[collection_name]
 
-# 객체 초기화 및 데이터 수집 시작
-collector = CryptoAndMarketDataCollector(crypto_symbol="BTCUSDT", start_date="2024-07-01", fred_api_key="your_fred_api_key")
-collector.start_scheduled_updates()
+        records = self.bitcoin_data.reset_index().to_dict('records')
+        if records:
+            collection.insert_many(records)
+            print(f"Data has been successfully saved to MongoDB collection '{collection_name}'.")
+        else:
+            print("No data to save to MongoDB.")
