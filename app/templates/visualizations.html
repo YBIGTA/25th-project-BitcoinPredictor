@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캔들 차트</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id="chart"></div>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('http://127.0.0.1:8000/predict'); // url
+            const result = await response.json();
+            return result.data;
+        }
+
+        async function drawChart() {
+            const data = await fetchData();
+
+            const dates = data.map(item => item['Open time']);  // 예시: 'Date' 컬럼이 존재한다는 가정
+            const open = data.map(item => item['Open']);    // 예시: 'Open' 컬럼
+            const high = data.map(item => item['High']);    // 예시: 'High' 컬럼
+            const low = data.map(item => item['Low']);      // 예시: 'Low' 컬럼
+            const close = data.map(item => item['Close']);  // 예시: 'Close' 컬럼
+
+            const trace = {
+                x: dates,
+                open: open,
+                high: high,
+                low: low,
+                close: close,
+                type: 'candlestick',
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+
+            const layout = {
+                title: '캔들 차트',
+                xaxis: {
+                    title: 'Date',
+                    type: 'category'
+                },
+                yaxis: {
+                    title: 'Price'
+                }
+            };
+
+            Plotly.newPlot('chart', [trace], layout);
+        }
+
+        drawChart();
+    </script>
+</body>
+</html>
