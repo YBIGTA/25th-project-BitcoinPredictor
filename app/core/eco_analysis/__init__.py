@@ -10,7 +10,7 @@ def update_and_save(collector):
 if __name__ == "__main__":
     start_date = input("Enter the start date (YYYY-MM-DD): ")
 
-    collector = CryptoAndMarketDataCollector(crypto_symbol="BTCUSDT", start_date=start_date, fred_api_key="your_fred_api_key")
+    collector = CryptoAndMarketDataCollector(crypto_symbol="BTCUSDT", start_date=start_date, fred_api_key="7fe1959a1692174b4b7acdd3b9eb8260")
 
     # Update and save the data initially
     update_and_save(collector)
