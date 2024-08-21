@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import os
 
 router = APIRouter()
 
-
-templates = Jinja2Templates(directory="/root/25th-project-BitcoinPredictor/app/templates")
-
-csv_file_path = "/root/25th-project-BitcoinPredictor/app/data/combined.csv"
+template_url = os.getenv("TEMPLATE_URL")
+csv_file_path = os.getenv("CSV_FILE_PATH")
+templates = Jinja2Templates(directory=template_url)
 
 @router.get("/predict")
 async def predict():
