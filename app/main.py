@@ -6,7 +6,8 @@ from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 
 
-load_dotenv("../.env")
+load_dotenv("/home/25th-project-BitcoinPredictor/.env")
+
 app = FastAPI()
 
 # 라우터 추가
