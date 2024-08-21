@@ -1,9 +1,11 @@
 from fastapi import APIRouter
 from routers import predict
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastapi import Request,FastAPI
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
+
 
 
 load_dotenv("/home/25th-project-BitcoinPredictor/.env")
@@ -15,6 +17,8 @@ app.include_router(predict.router)
 
 # 템플릿 설정
 templates = Jinja2Templates(directory="templates")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 루트 경로("/")에 대한 라우터 정의
 @app.get("/")
