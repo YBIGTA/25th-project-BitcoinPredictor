@@ -17,7 +17,7 @@ class FearGreedIndexCollector:
         url = "https://api.alternative.me/fng/?limit=1000&format=json"
         response = requests.get(url)
         data = response.json()
-
+        
         df = pd.DataFrame(data['data'])
         df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
         df['value'] = pd.to_numeric(df['value'])
