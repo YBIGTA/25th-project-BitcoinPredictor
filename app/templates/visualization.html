@@ -84,37 +84,38 @@
         margin: 0 auto;
     }
 
-        /* 돋보기 및 축소 버튼을 차트의 오른쪽 위로 배치 */
-        #zoom-button, #reset-button {
-            position: absolute;
-            top: 10px;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 10; /* 버튼이 차트 위에 나타나도록 설정 */
-        }
+    /* 돋보기 및 축소 버튼을 차트의 오른쪽 위로 배치 */
+    #zoom-button, #reset-button {
+        position: absolute;
+        top: 10px;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10; /* 버튼이 차트 위에 나타나도록 설정 */
+    }
 
-        #zoom-button {
-            right: 50px; /* 오른쪽에서 약간 왼쪽으로 */
-        }
+    #zoom-button {
+        right: 50px; /* 오른쪽에서 약간 왼쪽으로 */
+    }
 
-        #reset-button {
-            right: 10px; /* 오른쪽 끝에 위치 */
-        }
+    #reset-button {
+        right: 10px; /* 오른쪽 끝에 위치 */
+    }
     </style>
 </head>
 <body>
     <h1>Bitcoin Price Chart</h1>
+
     <!-- 차트 컨테이너 추가 -->
     <div id="chart-container">
         <!-- 돋보기 버튼 추가 -->
         <button id="zoom-button" onclick="zoomToThreeMonths()">🔍</button>
+        <!-- 축소 버튼 추가 -->
         <button id="reset-button" onclick="resetChart()">🔄</button>
-
         <div id="candlestick-chart"></div>
     </div>
 
@@ -135,85 +136,94 @@
     </div>
 
     <script>
-let selectedTimeframe = 'week';
-let zoomedStartDate = null;
-let zoomedEndDate = null;
+        let selectedTimeframe = 'week';
+        let zoomedStartDate = null;
+        let zoomedEndDate = null;
 
-function setTimeframe(timeframe) {
-    selectedTimeframe = timeframe;
-    if (zoomedStartDate && zoomedEndDate) {
-        // 최근 3개월의 데이터로 차트를 업데이트
-        updateChart(zoomedStartDate, zoomedEndDate);
-    } else {
+        function setTimeframe(timeframe) {
+            selectedTimeframe = timeframe;
+            if (zoomedStartDate && zoomedEndDate) {
+                // 최근 3개월의 데이터로 차트를 업데이트
+                updateChart(zoomedStartDate, zoomedEndDate);
+            } else {
+                updateChart();
+            }
+        }
+
+        async function fetchData(startDate = null, endDate = null) {
+            let url = `/predict?timeframe=${selectedTimeframe}`;
+            if (startDate && endDate) {
+                url += `&start_date=${startDate}&end_date=${endDate}`;
+            }
+            const response = await fetch(url);
+            const json = await response.json();
+            return json.data;
+        }
+
+        async function updateChart(startDate = null, endDate = null) {
+            const data = await fetchData(startDate, endDate);
+
+            // 데이터가 충분한지 확인
+            if (data.length === 0) {
+                document.getElementById('candlestick-chart').innerHTML = "<p>No data available for the selected date range.</p>";
+                return;
+            }
+
+            const dates = data.map(row => row.Date);
+            const opens = data.map(row => row.Open);
+            const highs = data.map(row => row.High);
+            const lows = data.map(row => row.Low);
+            const closes = data.map(row => row.Close);
+
+            const trace = {
+                x: dates,
+                close: closes,
+                decreasing: {line: {color: 'red'}},
+                high: highs,
+                increasing: {line: {color: 'green'}},
+                low: lows,
+                open: opens,
+                type: 'candlestick',
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+
+            const layout = {
+                title: `Bitcoin Price - ${selectedTimeframe.toUpperCase()}`,
+                xaxis: {title: 'Date'},
+                yaxis: {title: 'Price'},
+                showlegend: true,
+                responsive: true
+            };
+
+            Plotly.newPlot('candlestick-chart', [trace], layout);
+        }
+
+        async function zoomToThreeMonths() {
+            selectedTimeframe = 'day';  // 일봉으로 설정
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setMonth(endDate.getMonth() - 3);
+
+            // 날짜를 'YYYY-MM-DD' 형식으로 변환
+            zoomedStartDate = startDate.toISOString().split('T')[0];
+            zoomedEndDate = endDate.toISOString().split('T')[0];
+
+            // 일봉으로 최근 3개월 데이터로 차트를 업데이트
+            updateChart(zoomedStartDate, zoomedEndDate);
+        }
+
+        async function resetChart() {
+            selectedTimeframe = 'week';  // 주봉으로 설정
+            zoomedStartDate = null;
+            zoomedEndDate = null;
+
+            // 최근 1년치 데이터로 차트를 업데이트
+            updateChart();
+        }
+
+        // 페이지 로드 시 차트 초기화 (기본: 주봉, 최근 1년치 데이터)
         updateChart();
-    }
-}
-
-async function fetchData(startDate = null, endDate = null) {
-    let url = `/predict?timeframe=${selectedTimeframe}`;
-    if (startDate && endDate) {
-        url += `&start_date=${startDate}&end_date=${endDate}`;
-    }
-    const response = await fetch(url);
-    const json = await response.json();
-    return json.data;
-}
-
-async function updateChart(startDate = null, endDate = null) {
-    const data = await fetchData(startDate, endDate);
-
-    // 데이터가 충분한지 확인
-    if (data.length === 0) {
-        document.getElementById('candlestick-chart').innerHTML = "<p>No data available for the selected date range.</p>";
-        return;
-    }
-
-    const dates = data.map(row => row.Date);
-    const opens = data.map(row => row.Open);
-    const highs = data.map(row => row.High);
-    const lows = data.map(row => row.Low);
-    const closes = data.map(row => row.Close);
-
-    const trace = {
-        x: dates,
-        close: closes,
-        decreasing: {line: {color: 'red'}},
-        high: highs,
-        increasing: {line: {color: 'green'}},
-        low: lows,
-        open: opens,
-        type: 'candlestick',
-        xaxis: 'x',
-        yaxis: 'y'
-    };
-
-    const layout = {
-        title: `Bitcoin Price - ${selectedTimeframe.toUpperCase()}`,
-        xaxis: {title: 'Date'},
-        yaxis: {title: 'Price'},
-        showlegend: true,
-        responsive: true
-    };
-
-    Plotly.newPlot('candlestick-chart', [trace], layout);
-}
-
-async function zoomToThreeMonths() {
-    selectedTimeframe = 'day';  // 일봉으로 설정
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setMonth(endDate.getMonth() - 3);
-
-    // 날짜를 'YYYY-MM-DD' 형식으로 변환
-    zoomedStartDate = startDate.toISOString().split('T')[0];
-    zoomedEndDate = endDate.toISOString().split('T')[0];
-
-    // 일봉으로 최근 3개월 데이터로 차트를 업데이트
-    updateChart(zoomedStartDate, zoomedEndDate);
-}
-
-// 페이지 로드 시 차트 초기화 (기본: 주봉, 최근 1년치 데이터)
-updateChart();
     </script>
 </body>
 </html>
