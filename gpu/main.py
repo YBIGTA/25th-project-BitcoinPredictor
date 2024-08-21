@@ -1,8 +1,8 @@
 import threading
 import time
-from core.crawling.LoadJsonData import LoadJsonData
-from core.sentimental_analysis.bertCommunity import bertCommunity
-from core.sentimental_analysis.bertHeadline import bertHeadline
+from gpu.crawling.LoadJsonData import LoadJsonData
+from gpu.sentimental_analysis.bertCommunity import bertCommunity
+from gpu.sentimental_analysis.bertHeadline import bertHeadline
 from core.eco_analysis.EcoAnalysis import EcoAnalysis
 
 

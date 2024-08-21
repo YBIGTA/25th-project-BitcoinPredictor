@@ -50,3 +50,7 @@ wheel==0.43.0
 xxhash==3.5.0
 yarl==1.9.4
 zstandard==0.22.0
+yfinance==0.2.41
+fredapi==0.5.2
+schedule==1.2.2
+
