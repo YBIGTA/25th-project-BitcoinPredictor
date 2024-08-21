@@ -1,14 +1,43 @@
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Request
 import pandas as pd
+import mplfinance as mpf
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+from io import BytesIO
+import base64
+import matplotlib.pyplot as plt
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 router = APIRouter()
 
+
+templates = Jinja2Templates(directory="/root/25th-project-BitcoinPredictor/app/templates")
+
+csv_file_path = "/root/25th-project-BitcoinPredictor/app/data/combined.csv"
+
 @router.get("/predict")
 async def predict():
-    # CSV 파일 읽기
-    df = pd.read_csv('/root/25th-project-BitcoinPredictor/app/data/combined.csv')
+    try:
+        # CSV 파일 읽어오기
+        df = pd.read_csv(csv_file_path)
+
     
-    # JSON 형식으로 변환
-    data = df.to_dict(orient='records')
-    
-    return {"data": data}
+        # 필요한 컬럼 선택
+        df['Date'] = pd.to_datetime(df['Open time'])
+        df['Date'] = df['Date'].astype(str)  # Timestamp를 문자열로 변환
+
+        df = df[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+
+        # JSON으로 변환 
+        data = df.to_dict(orient="records")
+        return JSONResponse(content={"data": data})
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/", response_class=HTMLResponse)
+async def get_chart(request: Request):
+    return templates.TemplateResponse("visualization.html", {"request": request})

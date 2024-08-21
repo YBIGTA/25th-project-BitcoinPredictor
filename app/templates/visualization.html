@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candlestick Chart</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #candlestick-chart {
+            width: 100%;
+            max-width: 1200px;
+            height: 80vh; /* 화면 크기에 따라 반응형 크기 */
+        }
+
+        #legend {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color-box {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bitcoin Price Chart</h1>
+    
+    <div id="controls">
+        <!-- 날짜 범위 선택 -->
+        <label for="start-date">Start Date:</label>
+        <input type="date" id="start-date">
+        
+        <label for="end-date">End Date:</label>
+        <input type="date" id="end-date">
+        
+        <button onclick="updateChart()">Update Chart</button>
+    </div>
+    
+    <div id="timeframe-controls">
+        <button onclick="updateChart('minute')">분봉</button>
+        <button onclick="updateChart('day')">일봉</button>
+        <button onclick="updateChart('week')">주봉</button>
+    </div>
+
+    <div id="candlestick-chart"></div>
+
+    <div id="legend">
+        <div class="legend-item">
+            <div class="legend-color-box" style="background-color: yellow;"></div>
+            <span>Before July 10th</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color-box" style="background-color: blue;"></div>
+            <span>After July 10th</span>
+        </div>
+    </div>
+    
+    <script>
+        async function fetchData(startDate = null, endDate = null) {
+            const response = await fetch('/predict');
+            const json = await response.json();
+            let data = json.data;
+
+            // 날짜 범위가 설정되었을 때 데이터 필터링
+            if (startDate && endDate) {
+                data = data.filter(row => row.Date >= startDate && row.Date <= endDate);
+            }
+
+            return data;
+        }
+
+        function aggregateData(data, timeframe) {
+            let aggregatedData = [];
+
+            // 데이터 그룹화를 위한 기준 생성
+            let currentGroup = null;
+            let currentGroupData = {
+                Date: null,
+                Open: null,
+                High: -Infinity,
+                Low: Infinity,
+                Close: null,
+                Volume: 0
+            };
+
+            data.forEach(row => {
+                const rowDate = new Date(row.Date);
+
+                if (timeframe === 'minute') {
+                    rowDate.setSeconds(0, 0);
+                } else if (timeframe === 'day') {
+                    rowDate.setHours(0, 0, 0, 0);
+                } else if (timeframe === 'week') {
+                    rowDate.setHours(0, 0, 0, 0);
+                    rowDate.setDate(rowDate.getDate() - rowDate.getDay()); // 주간 데이터는 주 시작일로 설정
+                }
+
+                const groupIdentifier = rowDate.getTime(); // 현재 그룹을 식별하기 위한 고유 값
+
+                if (currentGroup !== groupIdentifier) {
+                    // 새로운 그룹을 시작
+                    if (currentGroup !== null) {
+                        aggregatedData.push(currentGroupData);
+                    }
+                    currentGroup = groupIdentifier;
+                    currentGroupData = {
+                        Date: rowDate.toISOString(),
+                        Open: row.Open,
+                        High: row.High,
+                        Low: row.Low,
+                        Close: row.Close,
+                        Volume: row.Volume
+                    };
+                } else {
+                    // 기존 그룹 업데이트
+                    currentGroupData.High = Math.max(currentGroupData.High, row.High);
+                    currentGroupData.Low = Math.min(currentGroupData.Low, row.Low);
+                    currentGroupData.Close = row.Close;
+                    currentGroupData.Volume += row.Volume;
+                }
+            });
+
+            // 마지막 그룹 추가
+            if (currentGroup !== null) {
+                aggregatedData.push(currentGroupData);
+            }
+
+            return aggregatedData;
+        }
+
+        async function updateChart(timeframe = 'minute') {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const data = await fetchData(startDate, endDate);
+            const aggregatedData = aggregateData(data, timeframe);
+
+            // 데이터가 충분한지 확인
+            if (aggregatedData.length === 0) {
+                document.getElementById('candlestick-chart').innerHTML = "<p>No data available for the selected date range.</p>";
+                return;
+            }
+
+            const dates = aggregatedData.map(row => row.Date);
+            const opens = aggregatedData.map(row => row.Open);
+            const highs = aggregatedData.map(row => row.High);
+            const lows = aggregatedData.map(row => row.Low);
+            const closes = aggregatedData.map(row => row.Close);
+
+            // 색상을 기준으로 데이터를 나누기 위한 기준 날짜 설정
+            const splitDate = new Date("2024-07-10T00:00:00");
+
+            const traceBefore = {
+                x: dates.filter((date, i) => new Date(date) < splitDate),
+                close: closes.filter((close, i) => new Date(dates[i]) < splitDate),
+                decreasing: {line: {color: 'red'}},
+                high: highs.filter((high, i) => new Date(dates[i]) < splitDate),
+                increasing: {line: {color: 'green'}},
+                line: {color: 'yellow'},  // 노란색으로 표시
+                low: lows.filter((low, i) => new Date(dates[i]) < splitDate),
+                open: opens.filter((open, i) => new Date(dates[i]) < splitDate),
+                type: 'candlestick',
+                xaxis: 'x',
+                yaxis: 'y',
+                name: 'Before July 10th'
+            };
+
+            const traceAfter = {
+                x: dates.filter((date, i) => new Date(date) >= splitDate),
+                close: closes.filter((close, i) => new Date(dates[i]) >= splitDate),
+                decreasing: {line: {color: 'red'}},
+                high: highs.filter((high, i) => new Date(dates[i]) >= splitDate),
+                increasing: {line: {color: 'green'}},
+                line: {color: 'blue'},  // 파란색으로 표시
+                low: lows.filter((low, i) => new Date(dates[i]) >= splitDate),
+                open: opens.filter((open, i) => new Date(dates[i]) >= splitDate),
+                type: 'candlestick',
+                xaxis: 'x',
+                yaxis: 'y',
+                name: 'After July 10th'
+            };
+
+            const layout = {
+                title: 'Bitcoin Price',
+                xaxis: {title: 'Date'},
+                yaxis: {title: 'Price'},
+                showlegend: true, // 범례 추가
+                responsive: true  // 반응형 차트 설정
+            };
+
+            Plotly.newPlot('candlestick-chart', [traceBefore, traceAfter], layout);
+        }
+
+        // 페이지 로드 시 차트 초기화
+        updateChart();
+    </script>
+</body>
+</html>
