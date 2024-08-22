@@ -17,7 +17,7 @@ router = APIRouter()
 
 # 환경 변수를 가져옴
 template_url = os.getenv("TEMPLATE_URL")
-csv_file_path = "/home/25th-project-BitcoinPredictor/app/data/combined_data.csv"
+csv_file_path = "/root/25th-project-BitcoinPredictor/app/data/combined_data.csv"
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/predict")
@@ -25,8 +25,6 @@ async def predict(start_date: str = '2023-07-01', end_date: str = '2024-7-31', t
     try:
         logger.info("CSV 파일 읽기 시작")
         df = pd.read_csv(csv_file_path)
-        logger.info(f"데이터 프레임 컬럼: {df.columns}")
-        logger.info(f"데이터 프레임 헤드: {df.head()}")
 
         # 필요한 컬럼 선택 및 날짜 변환
         df['Date'] = pd.to_datetime(df['timestamp'])
@@ -41,6 +39,21 @@ async def predict(start_date: str = '2023-07-01', end_date: str = '2024-7-31', t
 
         logger.info(f"필터링 후 데이터 프레임 헤드: {df.head()}")
 
+        # 이동평균선 계산
+        df['MA20'] = df['Close'].rolling(window=20).mean()
+        df['MA60'] = df['Close'].rolling(window=60).mean()
+        logger.info(f"새로 생성된 MA: {df['MA20']}")
+
+        # RSI 계산 (14일 기준)
+        delta = df['Close'].diff(1)
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+
+        avg_gain = gain.rolling(window=14).mean()
+        avg_loss = loss.rolling(window=14).mean()
+
+        rs = avg_gain / avg_loss
+        df['RSI'] = 100 - (100 / (1 + rs))
 
         # 기간별 그룹화
         if timeframe == 'week':
@@ -49,7 +62,10 @@ async def predict(start_date: str = '2023-07-01', end_date: str = '2024-7-31', t
                 'High': 'max',
                 'Low': 'min',
                 'Close': 'last',
-                'Volume': 'sum'
+                'Volume': 'sum',
+                'MA20': 'last',
+                'MA60': 'last',
+                'RSI': 'last'
             }).reset_index()
         elif timeframe == 'minute':
             df = df.resample('T', on='Date').agg({
@@ -57,7 +73,10 @@ async def predict(start_date: str = '2023-07-01', end_date: str = '2024-7-31', t
                 'High': 'max',
                 'Low': 'min',
                 'Close': 'last',
-                'Volume': 'sum'
+                'Volume': 'sum',
+                'MA20': 'last',
+                'MA60': 'last',
+                'RSI': 'last'
             }).reset_index()
         else:  # default to 'day'
             df = df.resample('D', on='Date').agg({
@@ -65,7 +84,10 @@ async def predict(start_date: str = '2023-07-01', end_date: str = '2024-7-31', t
                 'High': 'max',
                 'Low': 'min',
                 'Close': 'last',
-                'Volume': 'sum'
+                'Volume': 'sum',
+                'MA20': 'last',
+                'MA60': 'last',
+                'RSI': 'last'
             }).reset_index()
 
         logger.info(f"그룹화 후 데이터 프레임 헤드: {df.head()}")
