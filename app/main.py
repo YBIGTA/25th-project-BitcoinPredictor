@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from routers import predict
+from app.routers import predict
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi import Request,FastAPI
@@ -16,11 +16,10 @@ app = FastAPI()
 app.include_router(predict.router)
 
 # 템플릿 설정
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="/home/25th-project-BitcoinPredictor/app/templates")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 루트 경로("/")에 대한 라우터 정의
 @app.get("/")
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("visualization.html", {"request": request})

@@ -1,38 +1,22 @@
-import threading
+import schedule
 import time
-from gpu.crawling.LoadJsonData import LoadJsonData
-from gpu.sentimental_analysis.bertCommunity import bertCommunity
-from gpu.sentimental_analysis.bertHeadline import bertHeadline
-from core.eco_analysis.EcoAnalysis import EcoAnalysis
+from gpu.elert.lstm_econ_only import EcoLstm
 
+def job():
+    lstm = EcoLstm()
+    lstm.main()
 
-community_data_path = "path/to/community_data"
-headline_data_path = "path/to/headline_data"
+# 1시간에 한 번 main() 함수를 실행하도록 예약
+schedule.every(1).hour.do(job)
 
-# 크롤링한 community data의 mongodb id
-community_data = LoadJsonData("community")
-comm_inserted_ids = community_data.process_and_store(community_data_path)
+print("Scheduler started. Press Ctrl+C to stop.")
 
-# 크롤링한 headline data의 mongodb id
-headline_data = LoadJsonData("headline")
-headline_inserted_ids = headline_data.process_and_store(headline_data_path)
-
-# 경제지표 분석
-ea = EcoAnalysis()
-
-# 병렬로 처리하는 방법 있을지도?
-comm_bert_model = bertCommunity()
-comm_analysis_ids = comm_bert_model.anaysis_and_store()
-
-head_bert_model = bertHeadline()
-head_analysis_ids_ids = head_bert_model.anaysis_and_store()
-
-
-# 데이터 결합?
-
-
-# lstm에 넣음
-
-
-# 데이터 추출 후 mongodb에 전달
-# final data collection = db["final_data"]
+try:
+    while True:
+        # 스케줄된 작업이 있는지 확인하고 실행
+        schedule.run_pending()
+        # 1초 대기 후 다시 체크
+        time.sleep(1)
+        
+except KeyboardInterrupt:
+    print("Scheduler stopped.")

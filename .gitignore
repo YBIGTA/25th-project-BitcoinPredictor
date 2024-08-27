@@ -13,3 +13,7 @@
 
 # data
 app/data
+gpu/elert/combined_data.csv
+gpu/elert/prediction_results_minute.json
+gpu/bertfinetune/train_set.xlsx
+gpu/bertfinetune/train_data.pkl

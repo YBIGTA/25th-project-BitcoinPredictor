@@ -16,8 +16,38 @@
             align-items: center;
         }
 
-        h1 {
+        h1, h2 {
             color: #333;
+        }
+        /* 제목과 이미지를 포함하는 컨테이너 */
+        #header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* 좌우로 이미지 정렬 */
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        #header-container h1 {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            margin: 0;
+        }
+
+        #header-container h2 {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            margin: 0;
+            top: 150px; 
+        }
+
+        #header-container img {
+            max-height: 250px;
+            width: auto;
         }
 
         #controls {
@@ -76,6 +106,7 @@
             width: 20px;
             height: 20px;
         }
+
         #chart-container {
             position: relative;
             width: 100%;
@@ -105,37 +136,135 @@
         #reset-button {
             right: 10px; /* 오른쪽 끝에 위치 */
         }
+
         #controls {
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap; /* 버튼과 입력 필드가 겹치지 않도록 수정 */
-}
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap; /* 버튼과 입력 필드가 겹치지 않도록 수정 */
+        }
 
-#candlestick-chart {
-    width: 100%;
-    max-width: 1200px;
-    height: 60vh; /* 차트 크기 조정 */
-}
+        #candlestick-chart {
+            width: 100%;
+            max-width: 1200px;
+            height: 60vh; /* 차트 크기 조정 */
+        }
 
-#rsi-chart {
-    width: 100%;
-    max-width: 1200px;
-    height: 30vh; /* RSI 차트 크기 조정 */
-    margin-top: 30px; /* 차트 간격 추가 */
-}
+        #rsi-chart {
+            width: 100%;
+            max-width: 1200px;
+            height: 30vh; /* RSI 차트 크기 조정 */
+            margin-top: 30px; /* 차트 간격 추가 */
+        }
 
-#chart-container {
-    position: relative;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-}
+        #chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 테이블 스타일 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        details {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        summary {
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        p {
+            margin-left: 20px;
+            line-height: 1.6;
+        }
+
+        #economic-indicators {
+            margin-top: 80px; /* 간격 조정 */
+            width: 100%;
+        }
+
+        details {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        summary {
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        p {
+            margin-left: 20px;
+            line-height: 1.6;
+        }
+        .styled-table {
+        border-collapse: collapse;
+        margin: 25px 0;
+        font-size: 1.0em;
+        font-family: Arial, sans-serif;
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 12px 15px;
+        text-align: left;
+    }
+
+    .styled-table th {
+        background-color: #007BFF;  /* 헤더 배경색을 푸른색으로 설정 */
+        color: #ffffff;
+        font-weight: bold;
+    }
+
+    .styled-table tr {
+        border-bottom: 1px solid #dddddd;
+    }
+
+    .styled-table tr:nth-of-type(even) {
+        background-color: #f3f3f3;
+    }
+
+    .styled-table tr:last-of-type {
+        border-bottom: 2px solid #007BFF;  /* 하단 테두리 색상을 푸른색으로 설정 */
+    }
+
+    .styled-table tr:hover {
+        background-color: #e0f0ff;  /* 행을 마우스로 오버할 때 푸른색으로 변경 */
+    }
     </style>
 </head>
 <body>    
-    <h1>Bitcoin Price Chart</h1>
+    <!-- 제목과 이미지를 포함하는 헤더 컨테이너 -->
+    <div id="header-container">
+        <img src="https://alternative.me/crypto/fear-and-greed-index.png" alt="Latest Crypto Fear & Greed Index">
+        <h1>Bitcoin Price Chart</h1>
+        <h2>(a.k.a Ki-Young-yi)</h2>
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBK7jXDEDhuRqWVx8oT6UJIOx-DswE6B7KBg&s" alt="Image 2"/> 
+    </div>
+
+    <!-- 컨트롤 패널 -->
     <div id="controls">
         <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
             <div style="display: flex; flex-direction: column; align-items: center;">
@@ -152,22 +281,64 @@
         </div>
     </div>
 
+    <!-- 타임프레임 컨트롤 -->
     <div id="timeframe-controls" style="text-align: center; margin-top: 20px;">
         <button onclick="setTimeframe('minute')">분봉</button>
         <button onclick="setTimeframe('day')">일봉</button>
         <button onclick="setTimeframe('week')">주봉</button>
     </div>
-    <!-- 차트 컨테이너 추가 -->
+
+    <!-- 차트 컨테이너 -->
     <div id="chart-container">
-        <!-- 돋보기 버튼 추가 -->
         <button id="zoom-button" onclick="zoomToThreeMonths()">🔍</button>
-        <!-- 축소 버튼 추가 -->
         <button id="reset-button" onclick="resetChart()">🔄</button>
         <div id="candlestick-chart"></div>
-        <div id="rsi-chart" style="margin-top: 30px;"></div> <!-- RSI 차트를 위한 div 추가 -->
+        <div id="rsi-chart"></div> <!-- RSI 차트를 위한 div -->
     </div>
 
+    <!-- 경제 지표 섹션 -->
+    <div id="economic-indicators">
+        <h2>Economic Indicators</h2>
+        <div id="indicators-table"></div>
+        
+        <!-- 경제 지표 설명 섹션 -->
+        <details>
+            <summary>Economic Indicators Description</summary>
+            <p><strong>Yahoo Indicators (야후 경제지표)</strong></p>
+            <p>S&P 500 Index (^GSPC): 미국 주식 시장의 대표적인 지수로, S&P 500 지수는 미국 대형 상장 기업 500개의 주가를 종합해 산출됩니다.</p>
+            <p>NASDAQ Composite (^IXIC): 나스닥 시장에 상장된 모든 주식을 포함하는 지수로, 기술주 중심의 지수입니다.</p>
+            <p>Gold Futures (GC=F): 금 선물의 가격으로, 금의 미래 가격에 대한 계약을 나타냅니다.</p>
+            <p>CBOE Volatility Index (^VIX): 주식 시장의 변동성을 나타내는 지수로, "공포 지수"라고도 불리며 시장의 불안감을 측정합니다.</p>
+            <p>10-Year Treasury Yield (^TNX): 미국 10년 만기 국채의 수익률로, 장기 금리의 기준이 됩니다.</p>
+            <p>Crude Oil Prices (CL=F): 원유 선물 가격으로, 원유의 미래 가격에 대한 계약을 나타냅니다.</p>
+            <p>EUR/USD Exchange Rate (EURUSD=X): 유로와 미국 달러 간의 환율을 나타냅니다.</p>
+            <p>Brent Crude Oil Prices (BZ=F): 브렌트유 선물 가격으로, 북해에서 생산된 원유의 미래 가격을 나타냅니다.</p>
+            <p>Shanghai Composite Index (000001.SS): 중국 상하이 증권거래소에 상장된 모든 주식을 포함하는 지수입니다.</p>
+            <p>Nikkei 225 (^N225): 일본 도쿄 증권거래소에 상장된 225개의 주요 기업 주식을 포함하는 지수입니다.</p>
+            <p>FTSE 100 Index (^FTSE): 영국 런던 증권거래소에 상장된 100대 대기업의 주식을 포함하는 지수입니다.</p>
+            <p>Euro Stoxx 50 Index (^STOXX50E): 유로존 내 50개의 주요 상장 기업의 주가를 포함하는 유럽 지수입니다.</p>
+            <p>Copper Futures (HG=F): 구리 선물 가격으로, 구리의 미래 가격에 대한 계약을 나타냅니다.</p>
+            <p>USD/JPY Exchange Rate (JPY=X): 미국 달러와 일본 엔 간의 환율을 나타냅니다.</p>
+            <p><strong>FRED Indicators (FRED 경제지표)</strong></p>
+            <p>M1 Money Stock (M1SL): 통화 공급량 지표로, 현금과 요구불예금을 포함한 돈의 총량입니다.</p>
+            <p>Consumer Price Index (CPILFESL): 소비자물가지수로, 소비자들이 구매하는 상품과 서비스의 평균 가격 변동을 측정합니다.</p>
+            <p>Total Nonfarm Payroll (PAYEMS): 미국의 비농업 부문 일자리 수를 나타내며, 고용 시장의 상태를 평가하는 주요 지표입니다.</p>
+            <p>Industrial Production Index (INDPRO): 산업 생산 지수로, 제조업, 광업, 전력 및 가스 등의 산업에서 생산된 총 생산량을 나타냅니다.</p>
+            <p>Unemployment Rate (UNRATE): 실업률로, 경제 활동에 참가하는 사람들 중 실업 상태에 있는 비율을 나타냅니다.</p>
+            <p>Commercial and Industrial Loans (BUSLOANS): 기업과 산업 부문에 대한 대출 총액을 나타냅니다.</p>
+            <p>M2 Money Stock (M2SL): M1에 저축성 예금, 소액 정기 예금 등을 더한 통화 공급량 지표입니다.</p>
+            <p>US Dollar to Japanese Yen Exchange Rate (DEXJPUS): 미국 달러와 일본 엔 간의 환율을 나타냅니다.</p>
+            <p>Dow Jones Industrial Average (DJIA): 다우존스 산업평균지수로, 미국의 30대 대기업의 주가를 포함한 대표적인 주가 지수입니다.</p>
+            <p>Federal Funds Rate (FEDFUNDS): 연방기금 금리로, 미국 연방준비제도가 정하는 단기 이자율입니다.</p>
+            <p>CBOE Volatility Index (VIXCLS): CBOE 변동성 지수로, 주식 시장의 변동성을 측정합니다.</p>
+            <p>10-Year Treasury Constant Maturity Rate (GS10): 미국 10년 만기 국채의 상환 기간별 수익률을 나타냅니다.</p>
+            <p>Crude Oil Prices: West Texas Intermediate (WTI) (DCOILWTICO): 서부 텍사스산 원유의 가격을 나타냅니다.</p>
+            <p><strong>value:</strong> 공포지수</p>
+            <p><strong>value_calssification(1~5):</strong> 5일수록 탐욕, 1일수록 공포</p>
+        </details>
+    </div>
     
+    <!-- JavaScript -->
     <script>
         let selectedTimeframe = 'week';
         let zoomedStartDate = null;
@@ -182,112 +353,161 @@
             }
         }
 
-        async function fetchData(startDate = null, endDate = null) {
-            let url = `/predict?timeframe=${selectedTimeframe}`;
-            if (startDate && endDate) {
-                url += `&start_date=${startDate}&end_date=${endDate}`;
-            }
-            const response = await fetch(url);
-            const json = await response.json();
-            return json.data;
+        async function fetchEconomicIndicators() {
+    try {
+        const response = await fetch('/data');  // FastAPI에서 데이터를 가져오는 엔드포인트
+        const jsonResponse = await response.json();
+        const data = jsonResponse;  // jsonResponse.data 대신 jsonResponse를 사용
+
+        if (!data || Object.keys(data).length === 0) {
+            document.getElementById('indicators-table').innerHTML = "<p>No data available.</p>";
+            return;
         }
 
-        async function updateChart(startDate = null, endDate = null) {
-            const selectedStartDate = document.getElementById('start-date').value || startDate;
-            const selectedEndDate = document.getElementById('end-date').value || endDate;
+        let table = "<table class='styled-table'>";
+        const headers = Object.keys(data);
 
-            const data = await fetchData(selectedStartDate, selectedEndDate);
-
-            if (data.length === 0) {
-                document.getElementById('candlestick-chart').innerHTML = "<p>No data available for the selected date range.</p>";
-                return;
+        // 각 행에 5개의 항목을 포함하는 구조로 만들기
+        for (let i = 0; i < headers.length; i += 5) {
+            table += "<tr>";
+            // 헤더 행 생성
+            for (let j = i; j < i + 5 && j < headers.length; j++) {
+                table += `<th>${headers[j]}</th>`;
             }
+            table += "</tr><tr>";
+            // 데이터 행 생성
+            for (let j = i; j < i + 5 && j < headers.length; j++) {
+                table += `<td>${data[headers[j]]}</td>`;
+            }
+            table += "</tr>";
+        }
 
-            const dates = data.map(row => row.Date);
-            const opens = data.map(row => row.Open);
-            const highs = data.map(row => row.High);
-            const lows = data.map(row => row.Low);
-            const closes = data.map(row => row.Close);
-            const volumes = data.map(row => row.Volume);
-            const ma20 = data.map(row => row.MA20);
-            const ma60 = data.map(row => row.MA60);
-            const rsi = data.map(row => row.RSI);
+        table += "</table>";
+        document.getElementById('indicators-table').innerHTML = table;
 
-            const traceCandlestick = {
-                x: dates,
-                close: closes,
-                decreasing: {line: {color: 'red'}},
-                high: highs,
-                increasing: {line: {color: 'blue'}},
-                low: lows,
-                open: opens,
-                type: 'candlestick',
-                xaxis: 'x',
-                yaxis: 'y'
-            };
+    } catch (error) {
+        console.error("Error fetching economic indicators:", error);
+        document.getElementById('indicators-table').innerHTML = "<p>Error loading data.</p>";
+    }
+}
 
-            const traceVolume = {
-                x: dates,
-                y: volumes,
-                type: 'bar',
-                yaxis: 'y2',
-                marker: {color: 'rgba(100, 150, 250, 0.4)'},
-                name: 'Volume'
-            };
+async function updateChart(startDate = '2023-07-31', endDate = '2024-7-31') {
+    const selectedStartDate = document.getElementById('start-date').value || startDate;
+    const selectedEndDate = document.getElementById('end-date').value || endDate;
 
-            const traceMA20 = {
-                x: dates,
-                y: ma20,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'blue'},
-                name: 'MA20'
-            };
+    const response = await fetch(`/predict?timeframe=${selectedTimeframe}&start_date=${selectedStartDate}&end_date=${selectedEndDate}`);
+    const json = await response.json();
 
-            const traceMA60 = {
-                x: dates,
-                y: ma60,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'orange'},
-                name: 'MA60'
-            };
+    const trueValueData = json.true_value;
+    const predictData = json.predict;
 
+    if (trueValueData.length === 0) {
+        document.getElementById('candlestick-chart').innerHTML = "<p>No data available for the selected date range.</p>";
+        return;
+    }
 
-            const traceRSI = {
-                x: dates,
-                y: rsi,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'purple'},
-                name: 'RSI'
-            };
-            const layoutCandlestick = {
-                title: `Bitcoin Price - ${selectedTimeframe.toUpperCase()}`,
-                xaxis: {title: 'Date'},
-                yaxis: {title: 'Price'},
-                // yaxis2: {title: 'Volume', overlaying: 'y', side: 'right'},
-                showlegend: true,
-                responsive: true,
-                height: 450, // 캔들 차트의 높이 조정
-            };
+    const dates = trueValueData.map(row => row.Date);
+    const opens = trueValueData.map(row => row.Open);
+    const highs = trueValueData.map(row => row.High);
+    const lows = trueValueData.map(row => row.Low);
+    const closes = trueValueData.map(row => row.Close);
+    const volumes = trueValueData.map(row => row.Volume);
+    const ma20 = trueValueData.map(row => row.MA20);
+    const ma60 = trueValueData.map(row => row.MA60);
+    const rsi = trueValueData.map(row => row.RSI);
 
+    const predictDates = predictData.map(row => row.Date);
+    const predictCloses = predictData.map(row => row.predicted_price);
 
-            const layoutRSI = {
-                title: 'RSI',
-                xaxis: {title: 'Date'},
-                yaxis: {title: 'RSI', range: [0, 100]},
-                showlegend: true,
-                responsive: true,
-                height: 200,
-                margin: {
-                    t: 20,
-                    b: 20
-                }
-            };
+    const traceCandlestick = {
+        x: dates,
+        close: closes,
+        decreasing: {line: {color: 'red'}},
+        high: highs,
+        increasing: {line: {color: 'blue'}},
+        low: lows,
+        open: opens,
+        type: 'candlestick',
+        xaxis: 'x',
+        yaxis: 'y'
+    };
 
-        Plotly.newPlot('candlestick-chart', [traceCandlestick,traceMA20, traceMA60], layoutCandlestick);
-        Plotly.newPlot('rsi-chart', [traceRSI], layoutRSI);}
+    const traceVolume = {
+        x: dates,
+        y: volumes,
+        type: 'bar',
+        yaxis: 'y2',
+        marker: {color: 'rgba(100, 150, 250, 0.4)'},
+        name: 'Volume'
+    };
+
+    const traceMA20 = {
+        x: dates,
+        y: ma20,
+        type: 'scatter',
+        mode: 'lines',
+        line: {color: 'blue'},
+        name: 'MA20'
+    };
+
+    const traceMA60 = {
+        x: dates,
+        y: ma60,
+        type: 'scatter',
+        mode: 'lines',
+        line: {color: 'orange'},
+        name: 'MA60'
+    };
+
+    const tracePredict = {
+        x: predictDates,
+        y: predictCloses,
+        type: 'scatter',
+        mode: 'markers',
+        marker: {color: 'green', size: 8},
+        name: 'Predicted'
+    };
+
+    const traceRSI = {
+        x: dates,
+        y: rsi,
+        type: 'scatter',
+        mode: 'lines',
+        line: {color: 'purple'},
+        name: 'RSI'
+    };
+
+    const layoutCandlestick = {
+        title: `Bitcoin Price - ${selectedTimeframe.toUpperCase()}`,
+        xaxis: {title: 'Date'},
+        yaxis: {title: 'Price'},
+        showlegend: true,
+        responsive: true,
+        height: 450, // 캔들 차트의 높이 조정
+    };
+
+    const layoutRSI = {
+        title: 'RSI',
+        xaxis: {title: 'Date'},
+        yaxis: {
+            title: 'RSI',
+            range: [0, 100],
+            tickvals: [0, 30, 50, 70, 100],
+            ticktext: ['0', '30', '50', '70', '100'],
+        },
+        showlegend: true,
+        responsive: true,
+        height: 200,
+        margin: {
+            t: 20,
+            b: 20
+        }
+    };
+
+    Plotly.newPlot('candlestick-chart', [traceCandlestick, traceMA20, traceMA60, tracePredict], layoutCandlestick);
+    Plotly.newPlot('rsi-chart', [traceRSI], layoutRSI);
+}
+
 
         async function zoomToThreeMonths() {
             selectedTimeframe = 'day';
@@ -309,6 +529,7 @@
             updateChart();
         }
 
+        // Initial chart load
         updateChart();
     </script>
 </body>
